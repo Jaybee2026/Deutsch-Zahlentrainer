@@ -1,0 +1,26 @@
+{
+  "name": "Deutsch Zahlen-Trainer",
+  "short_name": "Zahlen Trainer",
+  "description": "Hör- und Lesequiz für deutsche Zahlen (DaF)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f0f4ff",
+  "theme_color": "#1d4ed8",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
