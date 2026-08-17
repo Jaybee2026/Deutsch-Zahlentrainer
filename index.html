@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Zahlen Trainer">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1d4ed8">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Deutsch Zahlen-Trainer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { min-height: 100vh; background: #f0f4ff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; font-family: Georgia, serif; }
+
+  /* ── HEADER ── */
+  .label    { font-size: 13px; letter-spacing: 4px; text-transform: uppercase; color: #1d4ed8; font-weight: bold; margin-bottom: 6px; text-align: center; }
+  h1        { font-size: 24px; color: #111827; font-weight: bold; margin-bottom: 8px; text-align: center; }
+  .subtitle { font-size: 14px; color: #6b7280; margin-bottom: 28px; text-align: center; }
+
+  /* ── SETUP ── */
+  #setup { width: 100%; max-width: 430px; }
+  .setup-card { background: #fff; border: 3px solid #1d4ed8; border-radius: 20px; padding: 24px 20px 20px; box-shadow: 0 4px 16px rgba(29,78,216,0.15); }
+
+  .range-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 20px; }
+  .range-col { text-align: center; }
+  .range-col p { font-size: 12px; color: #6b7280; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px; }
+  .range-col input { width: 110px; padding: 10px 8px; font-size: 19px; font-weight: bold; text-align: center; border: 2.5px solid #1d4ed8; border-radius: 10px; color: #111827; background: #fff; font-family: Georgia, serif; }
+  .dash { font-size: 28px; color: #9ca3af; margin-top: 20px; }
+
+  .sec-label { font-size: 10px; color: #9ca3af; text-align: center; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .btns-row  { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-bottom: 8px; }
+  .divider   { border: none; border-top: 1px dashed #d1d5db; margin: 10px 0 12px; }
+
+  /* Normale Quick-Buttons */
+  .qbtn { padding: 7px 13px; border-radius: 20px; border: 2px solid #1d4ed8; background: #fff; color: #1d4ed8; font-size: 13px; font-weight: bold; cursor: pointer; font-family: Georgia, serif; }
+  .qbtn.active { border: 5px solid #dc2626; }
+
+  /* Gradient Sonderbereich-Buttons */
+  .gbtn { padding: 7px 13px; border-radius: 20px; border: none; background: linear-gradient(to right, #1e3a8a, #60a5fa); color: #fff; font-size: 13px; font-weight: bold; cursor: pointer; font-family: Georgia, serif; }
+  .gbtn.active { box-shadow: 0 0 0 5px #dc2626; }
+
+  /* Modus + Anzahl + Reihenfolge */
+  .opt-btn { padding: 7px 18px; border-radius: 20px; border: 2px solid #1d4ed8; background: #fff; color: #1d4ed8; font-size: 13px; font-weight: bold; cursor: pointer; font-family: Georgia, serif; }
+  .opt-btn.active { border: 5px solid #dc2626; }
+  .mode-hint { font-size: 11px; color: #9ca3af; text-align: center; margin: -2px 0 6px; min-height: 15px; }
+
+  #error-msg  { color: #dc2626; font-size: 13px; text-align: center; margin-bottom: 10px; min-height: 18px; }
+  #voice-warn { color: #b45309; background: #fef3c7; border-radius: 10px; font-size: 12px; text-align: center; line-height: 1.4; padding: 0; display: none; margin-bottom: 10px; }
+  #voice-warn.show { display: block; padding: 10px 12px; }
+  .start-btn  { width: 100%; background: #1d4ed8; border: none; color: #fff; font-size: 16px; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; padding: 16px; border-radius: 40px; cursor: pointer; box-shadow: 0 4px 12px rgba(29,78,216,0.35); font-family: Georgia, serif; }
+
+  /* ── QUIZ ── */
+  #quiz { display: none; width: 100%; max-width: 380px; flex-direction: column; align-items: center; gap: 12px; }
+  #topbar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  #range-label   { font-size: 13px; color: #6b7280; font-weight: bold; }
+  #score-display { display: flex; gap: 14px; font-size: 17px; font-weight: bold; }
+
+  #progress-wrap { width: 100%; }
+  #progress-bar-bg { background: #e5e7eb; border-radius: 10px; height: 7px; width: 100%; }
+  #progress-bar    { height: 7px; background: #1d4ed8; border-radius: 10px; width: 0%; transition: width 0.35s ease; }
+  #progress-lbl    { font-size: 11px; color: #9ca3af; text-align: right; margin-top: 3px; }
+
+  #speak-card { background: #fff; border: 3px solid #1d4ed8; border-radius: 20px; padding: 20px 24px; text-align: center; width: 100%; box-shadow: 0 4px 16px rgba(29,78,216,0.15); }
+  #solution-word { font-size: 26px; color: #1d4ed8; font-weight: bold; margin-bottom: 10px; display: none; line-height: 1.2; overflow-wrap: anywhere; hyphens: auto; }
+  #shown-number  { font-size: 46px; color: #111827; font-weight: bold; margin-bottom: 10px; display: none; letter-spacing: 1px; }
+  #prompt     { font-size: 13px; letter-spacing: 3px; color: #374151; text-transform: uppercase; margin-bottom: 14px; font-weight: bold; }
+  #speak-btn  { background: #1d4ed8; border: none; border-radius: 50%; color: #fff; font-size: 28px; width: 66px; height: 66px; display: flex; align-items: center; justify-content: center; margin: 0 auto; cursor: pointer; box-shadow: 0 4px 12px rgba(29,78,216,0.4); }
+  #speak-btn:active { transform: scale(0.91); }
+
+  #choices { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .choice { display: flex; align-items: center; gap: 14px; background: #fff; border: 2.5px solid #9ca3af; border-radius: 14px; padding: 12px 16px; cursor: pointer; width: 100%; text-align: left; font-family: Georgia, serif; box-shadow: 0 2px 6px rgba(0,0,0,0.07); transition: all 0.18s; }
+  .choice:active { transform: scale(0.98); }
+  .choice.correct { border-color: #16a34a; background: #dcfce7; box-shadow: 0 0 0 3px rgba(22,163,74,0.2); }
+  .choice.wrong   { border-color: #dc2626; background: #fee2e2; box-shadow: 0 0 0 3px rgba(220,38,38,0.2); }
+  .choice.dim     { border-color: #e5e7eb; background: #f9fafb; }
+  .chk { width: 26px; height: 26px; border-radius: 6px; border: 2.5px solid #9ca3af; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: bold; color: #fff; }
+  .choice.correct .chk { background: #16a34a; border-color: #16a34a; }
+  .choice.wrong   .chk { background: #dc2626; border-color: #dc2626; }
+  .choice-num  { font-size: 26px; font-weight: bold; min-width: 90px; text-align: center; color: #111827; }
+  .choice-text { font-size: 19px; font-weight: bold; color: #111827; line-height: 1.25; overflow-wrap: anywhere; hyphens: auto; }
+  .choice.correct .choice-num, .choice.correct .choice-text { color: #14532d; }
+  .choice.wrong   .choice-num, .choice.wrong   .choice-text { color: #7f1d1d; }
+  .choice.dim     .choice-num, .choice.dim     .choice-text { color: #9ca3af; }
+  .choice-word { font-size: 13px; color: #9ca3af; display: none; word-break: break-word; }
+  .show-word .choice-word { display: block; }
+  .choice.correct .choice-word { color: #14532d; }
+  .choice.wrong   .choice-word { color: #7f1d1d; }
+
+  #feedback    { font-size: 15px; font-weight: bold; text-align: center; min-height: 22px; }
+  #bottom-btns { display: none; flex-direction: column; align-items: center; gap: 10px; }
+  .next-btn    { background: #1d4ed8; border: none; color: #fff; font-size: 14px; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; padding: 14px 36px; border-radius: 40px; cursor: pointer; box-shadow: 0 4px 12px rgba(29,78,216,0.35); font-family: Georgia, serif; }
+  .sec-btn     { background: transparent; border: 2px solid #9ca3af; color: #6b7280; font-size: 13px; font-weight: bold; padding: 9px 20px; border-radius: 40px; cursor: pointer; font-family: Georgia, serif; }
+  .quiz-footer { display: flex; gap: 10px; justify-content: center; }
+
+  /* ── RESULT ── */
+  #result { display: none; width: 100%; max-width: 380px; flex-direction: column; align-items: center; gap: 16px; }
+  .result-card  { background: #fff; border: 3px solid #1d4ed8; border-radius: 20px; padding: 36px 28px; text-align: center; width: 100%; box-shadow: 0 4px 16px rgba(29,78,216,0.15); }
+  .result-emoji { font-size: 52px; margin-bottom: 10px; }
+  .result-title { font-size: 22px; font-weight: bold; color: #111827; margin-bottom: 6px; }
+  .result-sub   { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  .result-score { font-size: 54px; font-weight: bold; color: #1d4ed8; line-height: 1; margin-bottom: 6px; }
+  .result-pct   { font-size: 16px; color: #374151; margin-bottom: 28px; }
+  .result-btns  { display: flex; flex-direction: column; gap: 10px; }
+  .r-btn-main   { background: #1d4ed8; border: none; color: #fff; font-size: 14px; font-weight: bold; letter-spacing: 2px; padding: 14px; border-radius: 40px; cursor: pointer; font-family: Georgia, serif; }
+  .r-btn-sec    { background: transparent; border: 2px solid #1d4ed8; color: #1d4ed8; font-size: 14px; font-weight: bold; padding: 12px; border-radius: 40px; cursor: pointer; font-family: Georgia, serif; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 480px) {
+    body { padding: 16px 12px; }
+    .setup-card { padding: 20px 14px; }
+    .range-row { gap: 10px; }
+    .range-col input { width: 92px; font-size: 18px; padding: 10px 6px; }
+    .choice { padding: 12px 14px; min-height: 48px; }
+    .choice-num { min-width: 72px; font-size: 23px; }
+    .choice-text { font-size: 17px; }
+    .start-btn { min-height: 52px; font-size: 15px; }
+    .next-btn  { min-height: 48px; }
+    #speak-btn { width: 60px; height: 60px; font-size: 26px; }
+    #shown-number { font-size: 38px; }
+  }
+  @media (min-width: 481px) and (max-width: 1024px) {
+    #setup, #quiz, #result { max-width: 520px; }
+    .setup-card { padding: 30px 26px; }
+    .range-col input { width: 120px; font-size: 21px; }
+    .choice { padding: 15px 20px; min-height: 52px; }
+  }
+  @media (min-width: 1025px) {
+    #setup, #quiz, #result { max-width: 560px; }
+    .qbtn:hover, .opt-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 8px rgba(29,78,216,0.2); }
+    .choice:hover:not(.correct):not(.wrong):not(.dim) { transform: translateX(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .start-btn:hover { background: #1e40af; transform: translateY(-1px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SETUP ═══════════ -->
+<div id="setup">
+  <p class="label">Hör- und Lesequiz</p>
+  <h1>Deutsch Zahlen-Trainer</h1>
+  <p class="subtitle">Wähle deinen Übungsbereich</p>
+
+  <div class="setup-card">
+
+    <!-- Von – Bis -->
+    <div class="range-row">
+      <div class="range-col">
+        <p>VON</p>
+        <input type="number" id="from-input" value="1" min="0" oninput="onManualInput()">
+      </div>
+      <div class="dash">–</div>
+      <div class="range-col">
+        <p>BIS</p>
+        <input type="number" id="to-input" value="100" min="0" oninput="onManualInput()">
+      </div>
+    </div>
+
+    <!-- Schnellauswahl -->
+    <p class="sec-label">Schnellauswahl</p>
+    <div class="btns-row" id="quick-group">
+      <button class="qbtn" onclick="setRange(1,10,this,1)">1–10</button>
+      <button class="qbtn" onclick="setRange(1,20,this,1)">1–20</button>
+      <button class="qbtn" onclick="setRange(1,50,this,1)">1–50</button>
+      <button class="qbtn" onclick="setRange(1,100,this,1)">1–100</button>
+      <button class="qbtn" onclick="setRange(11,99,this,1)">11–99</button>
+      <button class="qbtn" onclick="setRange(13,19,this,1)">13–19</button>
+      <button class="qbtn" onclick="setRange(1,1000,this,1)">1–1000</button>
+      <button class="qbtn" onclick="setRange(1,999999,this,1)">1–999.999</button>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Sonderbereiche -->
+    <p class="sec-label">Sonderbereiche</p>
+    <div class="btns-row" id="special-group">
+      <button class="gbtn" onclick="setRange(10,90,this,10)">Zehner</button>
+      <button class="gbtn" onclick="setRange(100,900,this,100)">Hdt</button>
+      <button class="gbtn" onclick="setRange(1000,9000,this,1000)">Tsd</button>
+      <button class="gbtn" onclick="setRange(10000,90000,this,10000)">10Tsd</button>
+      <button class="gbtn" onclick="setRange(100000,900000,this,100000)">100Tsd</button>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Modus -->
+    <p class="sec-label">Modus</p>
+    <div class="btns-row" id="mode-group">
+      <button class="opt-btn active" onclick="setMode('hoeren',this)">Hören</button>
+      <button class="opt-btn" onclick="setMode('lesen',this)">Lesen</button>
+    </div>
+    <p class="mode-hint" id="mode-hint">Zahl anhören, richtige Ziffer antippen</p>
+
+    <hr class="divider">
+
+    <!-- Anzahl Fragen -->
+    <p class="sec-label">Anzahl Fragen</p>
+    <div class="btns-row" id="count-group">
+      <button class="opt-btn active" onclick="setOpt(this,'count-group'); numQ=10">10</button>
+      <button class="opt-btn" onclick="setOpt(this,'count-group'); numQ=20">20</button>
+      <button class="opt-btn" onclick="setOpt(this,'count-group'); numQ=30">30</button>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Reihenfolge -->
+    <p class="sec-label">Reihenfolge</p>
+    <div class="btns-row" id="order-group">
+      <button class="opt-btn active" onclick="setOpt(this,'order-group'); orderMode='random'">Zufällig</button>
+      <button class="opt-btn" onclick="setOpt(this,'order-group'); orderMode='sequential'">Reihenfolge</button>
+    </div>
+
+    <hr class="divider">
+
+    <p id="voice-warn"></p>
+    <p id="error-msg"></p>
+    <button class="start-btn" onclick="startQuiz()">▶ Start</button>
+  </div>
+</div>
+
+<!-- ═══════════ QUIZ ═══════════ -->
+<div id="quiz">
+  <div id="topbar">
+    <span id="range-label"></span>
+    <div id="score-display">
+      <span style="color:#16a34a">✓ <span id="score-right">0</span></span>
+      <span style="color:#dc2626">✗ <span id="score-wrong">0</span></span>
+    </div>
+  </div>
+
+  <div id="progress-wrap">
+    <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+    <div id="progress-lbl">Frage 1 / 10</div>
+  </div>
+
+  <div id="speak-card">
+    <div id="solution-word"></div>
+    <div id="shown-number"></div>
+    <div id="prompt">Welche Zahl ist das?</div>
+    <button id="speak-btn" onclick="speakCurrent()">🔊</button>
+  </div>
+
+  <div id="choices"></div>
+  <p id="feedback"></p>
+
+  <div id="bottom-btns">
+    <button class="next-btn" onclick="if(autoTimer){clearTimeout(autoTimer);autoTimer=null;}nextRound()">Weiter →</button>
+    <div class="quiz-footer">
+      <button class="sec-btn" onclick="speakCurrent()">🔊 Nochmal</button>
+      <button class="sec-btn" onclick="showSetup()">⚙ Bereich</button>
+    </div>
+  </div>
+  <div class="quiz-footer">
+    <button class="sec-btn" onclick="showSetup()">← Zurück zur Auswahl</button>
+  </div>
+</div>
+
+<!-- ═══════════ RESULT ═══════════ -->
+<div id="result">
+  <div class="result-card">
+    <div class="result-emoji" id="result-emoji">🎉</div>
+    <div class="result-title">Quiz beendet!</div>
+    <div class="result-sub" id="result-sub"></div>
+    <div class="result-score" id="result-score">—</div>
+    <div class="result-pct" id="result-pct"></div>
+    <div class="result-btns">
+      <button class="r-btn-main" onclick="repeatSession()">↺ Nochmal</button>
+      <button class="r-btn-sec"  onclick="showSetup()">⚙ Neuer Bereich</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   DEUTSCHER ZAHLWORT-GENERATOR
+   Erzeugt zu jeder Zahl 0 – 999.999 das
+   ausgeschriebene deutsche Zahlwort.
+═══════════════════════════════════════════════ */
+const ONES  = ['', 'ein', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun'];
+const TEENS = ['zehn', 'elf', 'zwölf', 'dreizehn', 'vierzehn', 'fünfzehn', 'sechzehn', 'siebzehn', 'achtzehn', 'neunzehn'];
+const TENS  = ['', 'zehn', 'zwanzig', 'dreißig', 'vierzig', 'fünfzig', 'sechzig', 'siebzig', 'achtzig', 'neunzig'];
+
+// 1–999. multiplier=true → die Zahl steht vor "tausend",
+// dann heißt die 1 "ein" (eintausend) statt "eins".
+function under1000(n, multiplier) {
+  const h = Math.floor(n / 100);
+  const r = n % 100;
+  let s = '';
+  if (h > 0) s += ONES[h] + 'hundert';
+  if (r === 0) return s;
+  if (r < 10) {
+    s += (r === 1 && !multiplier) ? 'eins' : ONES[r];
+  } else if (r < 20) {
+    s += TEENS[r - 10];
+  } else {
+    const o = r % 10;
+    s += (o > 0 ? ONES[o] + 'und' : '') + TENS[Math.floor(r / 10)];
+  }
+  return s;
+}
+
+// 0–999.999 – im Deutschen alles zusammengeschrieben
+function numberToGerman(n) {
+  if (n === 0) return 'null';
+  const t = Math.floor(n / 1000);
+  const r = n % 1000;
+  let s = '';
+  if (t > 0) s += under1000(t, true) + 'tausend';
+  if (r > 0) s += under1000(r, false);
+  return s;
+}
+
+/* ═══════════════════════════════════════════════
+   HILFSFUNKTIONEN
+═══════════════════════════════════════════════ */
+function fmt(n)     { return n.toLocaleString('de-DE'); }
+function shuffle(a) { return [...a].sort(() => Math.random() - 0.5); }
+
+// Ghost-Callback-Schutz: jede neue Ausgabe erhöht die Generation,
+// abgebrochene Callbacks erkennen daran, dass sie veraltet sind.
+let speechGeneration = 0;
+
+function speak(word) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const gen = ++speechGeneration;
+  function doSpeak() {
+    if (gen !== speechGeneration) return;
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = 'de-DE';
+    u.rate = 0.85;
+    u.pitch = 1.0;
+    const de = window.speechSynthesis.getVoices().find(v => v.lang && v.lang.startsWith('de'));
+    if (de) u.voice = de;
+    window.speechSynthesis.speak(u);
+  }
+  const v = window.speechSynthesis.getVoices();
+  if (v.length > 0) {
+    doSpeak();
+  } else {
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; doSpeak(); };
+    setTimeout(doSpeak, 500);
+  }
+}
+function speakCurrent() { if (question) speak(question.w); }
+function stopSpeech() { if (window.speechSynthesis) window.speechSynthesis.cancel(); speechGeneration++; }
+
+/* ═══════════════════════════════════════════════
+   ZUSTAND
+═══════════════════════════════════════════════ */
+let currentStep = 1;
+let pool = [], sessionQueue = [], qIndex = 0;
+let question = null, scoreR = 0, scoreW = 0;
+let numQ = 10, orderMode = 'random', quizMode = 'hoeren';
+let autoTimer = null;
+
+/* ═══════════════════════════════════════════════
+   SETUP
+═══════════════════════════════════════════════ */
+function setRange(from, to, btn, step) {
+  document.getElementById('from-input').value = from;
+  document.getElementById('to-input').value   = to;
+  currentStep = step || 1;
+  document.querySelectorAll('.qbtn, .gbtn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function setOpt(btn, groupId) {
+  document.querySelectorAll('#' + groupId + ' .opt-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setMode(mode, btn) {
+  quizMode = mode;
+  setOpt(btn, 'mode-group');
+  document.getElementById('mode-hint').textContent =
+    mode === 'hoeren' ? 'Zahl anhören, richtige Ziffer antippen'
+                      : 'Ziffer lesen, richtiges Zahlwort antippen';
+}
+
+// Manuelle Eingabe hebt die Schnellauswahl auf (Schrittweite zurück auf 1)
+function onManualInput() {
+  document.querySelectorAll('.qbtn, .gbtn').forEach(b => b.classList.remove('active'));
+  currentStep = 1;
+}
+
+/* ═══════════════════════════════════════════════
+   QUIZ
+═══════════════════════════════════════════════ */
+function startQuiz() {
+  const from = parseInt(document.getElementById('from-input').value, 10);
+  const to   = parseInt(document.getElementById('to-input').value, 10);
+  const err  = document.getElementById('error-msg');
+
+  if (isNaN(from) || isNaN(to))  { err.textContent = 'Bitte beide Felder ausfüllen.'; return; }
+  if (from < 0)                  { err.textContent = 'Mindestwert ist 0.'; return; }
+  if (from >= to)                { err.textContent = 'Startzahl muss kleiner als Endzahl sein.'; return; }
+  if (to > 999999)               { err.textContent = 'Höchstwert ist 999.999.'; return; }
+
+  // Kleine Bereiche vollständig aufbauen, sehr große als Zufallsstichprobe –
+  // sonst würde die Liste bei z.B. 1–999.999 unnötig groß.
+  const steps = Math.floor((to - from) / currentStep) + 1;
+  pool = [];
+  if (steps <= 20000) {
+    for (let n = from; n <= to; n += currentStep) pool.push({ n: n, w: numberToGerman(n) });
+  } else {
+    const seen = new Set();
+    while (pool.length < 500) {
+      const n = from + Math.floor(Math.random() * steps) * currentStep;
+      if (seen.has(n)) continue;
+      seen.add(n);
+      pool.push({ n: n, w: numberToGerman(n) });
+    }
+    pool.sort((a, b) => a.n - b.n);
+  }
+  if (pool.length < 3) { err.textContent = 'Zu wenige Zahlen im Bereich (mind. 3 nötig).'; return; }
+  err.textContent = '';
+
+  const count = Math.min(numQ, pool.length);
+  sessionQueue = orderMode === 'random' ? shuffle(pool).slice(0, count) : pool.slice(0, count);
+
+  qIndex = 0; scoreR = 0; scoreW = 0;
+  document.getElementById('score-right').textContent = 0;
+  document.getElementById('score-wrong').textContent = 0;
+  document.getElementById('range-label').textContent = fmt(from) + ' – ' + fmt(to);
+
+  document.getElementById('setup').style.display  = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('quiz').style.display   = 'flex';
+  nextRound();
+}
+
+function showSetup() {
+  if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+  stopSpeech();
+  document.getElementById('quiz').style.display   = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('setup').style.display  = 'block';
+}
+
+function updateProgress() {
+  const total = sessionQueue.length;
+  document.getElementById('progress-bar').style.width = Math.round((qIndex / total) * 100) + '%';
+  document.getElementById('progress-lbl').textContent = 'Frage ' + qIndex + ' / ' + total;
+}
+
+function nextRound() {
+  if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+  if (qIndex >= sessionQueue.length) { showResult(); return; }
+
+  question = sessionQueue[qIndex];
+  qIndex++;
+  updateProgress();
+
+  const others  = shuffle(pool.filter(x => x.n !== question.n)).slice(0, 2);
+  const choices = shuffle([question, ...others]);
+
+  const hoeren = quizMode === 'hoeren';
+  document.getElementById('solution-word').style.display = 'none';
+  document.getElementById('shown-number').style.display  = hoeren ? 'none' : 'block';
+  document.getElementById('shown-number').textContent    = hoeren ? '' : fmt(question.n);
+  document.getElementById('prompt').textContent = hoeren ? 'Welche Zahl ist das?' : 'Wie schreibt man das?';
+  document.getElementById('speak-btn').style.display = hoeren ? 'flex' : 'none';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').style.color = '';
+  document.getElementById('bottom-btns').style.display = 'none';
+
+  const cont = document.getElementById('choices');
+  cont.innerHTML = '';
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    if (hoeren) {
+      const numStr = fmt(c.n);
+      const fs = numStr.length > 12 ? '16px' : numStr.length > 9 ? '19px' : numStr.length > 6 ? '22px' : '26px';
+      btn.innerHTML = '<div class="chk"></div>' +
+                      '<span class="choice-num" style="font-size:' + fs + '">' + numStr + '</span>' +
+                      '<span class="choice-word"></span>';
+      btn.querySelector('.choice-word').textContent = c.w;
+    } else {
+      const fs = c.w.length > 34 ? '14px' : c.w.length > 24 ? '16px' : c.w.length > 16 ? '18px' : '19px';
+      btn.innerHTML = '<div class="chk"></div>' +
+                      '<span class="choice-text" style="font-size:' + fs + '"></span>';
+      btn.querySelector('.choice-text').textContent = c.w;
+    }
+    btn.onclick = () => pick(c, btn);
+    cont.appendChild(btn);
+  });
+
+  if (hoeren) setTimeout(() => speak(question.w), 300);
+}
+
+function pick(c, btn) {
+  if (document.querySelector('.choice.correct')) return;   // Runde ist schon gelöst
+
+  if (c.n === question.n) {
+    btn.className = 'choice correct show-word';
+    btn.querySelector('.chk').textContent = '✓';
+    scoreR++;
+    document.getElementById('score-right').textContent = scoreR;
+
+    const sol = document.getElementById('solution-word');
+    if (quizMode === 'hoeren') {
+      sol.textContent = question.w;
+      sol.style.fontSize = question.w.length > 34 ? '15px' : question.w.length > 24 ? '18px' : question.w.length > 14 ? '22px' : '26px';
+      sol.style.display = 'block';
+      document.getElementById('prompt').textContent = 'Das war …';
+    } else {
+      document.getElementById('prompt').textContent = 'Richtig gelesen';
+      speak(question.w);
+    }
+
+    document.getElementById('feedback').style.color = '#16a34a';
+    document.getElementById('feedback').textContent = '✓ Richtig! Weiter in 2 s …';
+    document.getElementById('bottom-btns').style.display = 'flex';
+    document.querySelectorAll('.choice:not(.correct)').forEach(b => { b.className = 'choice dim show-word'; });
+    autoTimer = setTimeout(nextRound, 2000);
+  } else {
+    btn.className = 'choice wrong';
+    btn.querySelector('.chk').textContent = '✗';
+    scoreW++;
+    document.getElementById('score-wrong').textContent = scoreW;
+    document.getElementById('feedback').style.color = '#dc2626';
+    document.getElementById('feedback').textContent = '✗ Falsch – nochmal versuchen!';
+  }
+}
+
+function showResult() {
+  stopSpeech();
+  document.getElementById('quiz').style.display = 'none';
+  const total = sessionQueue.length;
+  const pct   = Math.round((scoreR / total) * 100);
+  document.getElementById('result-emoji').textContent = pct >= 90 ? '🎉' : pct >= 70 ? '👍' : pct >= 50 ? '💪' : '📚';
+  document.getElementById('result-score').textContent = scoreR + ' / ' + total;
+  document.getElementById('result-pct').textContent   = pct + '% richtig';
+  document.getElementById('result-sub').textContent   = quizMode === 'hoeren' ? 'Modus: Hören' : 'Modus: Lesen';
+  document.getElementById('result').style.display     = 'flex';
+}
+
+function repeatSession() {
+  if (orderMode === 'random') sessionQueue = shuffle(sessionQueue);
+  qIndex = 0; scoreR = 0; scoreW = 0;
+  document.getElementById('score-right').textContent = 0;
+  document.getElementById('score-wrong').textContent = 0;
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('quiz').style.display   = 'flex';
+  nextRound();
+}
+
+/* ═══════════════════════════════════════════════
+   STIMMEN-PRÜFUNG
+   Die App spricht über die im Gerät installierten Stimmen (offline).
+   Fehlt eine deutsche Stimme, bleibt der Ton stumm – dann Hinweis zeigen.
+═══════════════════════════════════════════════ */
+function checkVoices() {
+  const warn = document.getElementById('voice-warn');
+  if (!window.speechSynthesis) {
+    warn.textContent = 'Dieser Browser kann keine Sprachausgabe. Der Modus „Lesen" funktioniert trotzdem.';
+    warn.classList.add('show');
+    return;
+  }
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length === 0) return;   // noch nicht geladen – onvoiceschanged prüft erneut
+  if (voices.some(v => v.lang && v.lang.startsWith('de'))) {
+    warn.classList.remove('show');
+  } else {
+    warn.textContent = 'Keine deutsche Stimme gefunden. Auf iPhone/iPad: Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Deutsch laden.';
+    warn.classList.add('show');
+  }
+}
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.addEventListener('voiceschanged', checkVoices);
+}
+checkVoices();
+
+// ===== PWA: Service Worker registrieren (Offline-Fähigkeit) =====
+// Greift nur, wenn die Datei über http(s) ausgeliefert wird – bei file:// wird
+// die Registrierung vom Browser abgelehnt, die App läuft trotzdem.
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => console.log('[PWA] Service Worker registriert:', reg.scope))
+      .catch(err => console.warn('[PWA] Service Worker nicht registriert:', err));
+  });
+}
+</script>
+</body>
+</html>
